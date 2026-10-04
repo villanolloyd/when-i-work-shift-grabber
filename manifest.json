@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "When I Work – Shift Grabber",
+  "version": "11.3.5",
+  "description": "When I Work shift grabber with configurable break/lunch exclusions, preferred-shift auto-claiming, auto-refresh, and fast-poll monitoring.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://appx.wheniwork.com/*"
+  ],
+  "action": {
+    "default_title": "When I Work Shift Grabber",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://appx.wheniwork.com/myschedule*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
