@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Shift Grabber</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 380px;
+      margin: 0;
+      padding: 16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #182230;
+      background: #f5f7fa;
+    }
+    .header { margin-bottom: 14px; }
+    .title { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -0.2px; }
+    .subtitle { margin-top: 3px; color: #667085; font-size: 11px; }
+    .card {
+      background: #fff;
+      border: 1px solid #e4e7ec;
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #667085;
+      text-transform: uppercase;
+      letter-spacing: .55px;
+      margin-bottom: 10px;
+    }
+    .state-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 11px; }
+    .state { font-size: 13px; font-weight: 750; }
+    .status-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border-radius:999px;
+      padding:5px 9px;
+      font-size:11px;
+      font-weight:700;
+      background:#f2f4f7;
+      color:#667085;
+    }
+    .status-pill::before { content:""; width:7px; height:7px; border-radius:50%; background:#98a2b3; }
+    .status-pill.on { background:#ecfdf3; color:#027a48; }
+    .status-pill.on::before { background:#12b76a; }
+    .stats {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .stat {
+      background:#f8fafc;
+      border:1px solid #eef2f6;
+      border-radius:9px;
+      padding:9px 10px;
+      min-height:53px;
+    }
+    .stat-label { display:block; font-size:10px; color:#667085; margin-bottom:4px; }
+    .stat-value { font-size:14px; font-weight:700; color:#101828; }
+    .last-action {
+      margin-top:8px;
+      padding:9px 10px;
+      border-radius:9px;
+      background:#f8fafc;
+      border:1px solid #eef2f6;
+      line-height:1.35;
+      color:#475467;
+      word-break:break-word;
+    }
+    .last-action strong { display:block; color:#344054; font-size:10px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+    .toggle-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:9px 0;
+      border-bottom:1px solid #f0f2f5;
+    }
+    .toggle-row:last-child { border-bottom:0; padding-bottom:0; }
+    .toggle-copy { min-width:0; }
+    .toggle-title { font-weight:650; color:#344054; }
+    .toggle-help { color:#98a2b3; font-size:10px; margin-top:2px; line-height:1.3; }
+    .switch { position:relative; width:38px; height:22px; flex:0 0 auto; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; cursor:pointer; border-radius:999px; background:#d0d5dd; transition:.18s ease;
+    }
+    .slider::before {
+      content:""; position:absolute; width:18px; height:18px; left:2px; top:2px; border-radius:50%; background:#fff;
+      box-shadow:0 1px 2px rgba(16,24,40,.2); transition:.18s ease;
+    }
+    .switch input:checked + .slider { background:#1570ef; }
+    .switch input:checked + .slider::before { transform:translateX(16px); }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .field { margin-top:10px; }
+    .field:first-child, .field:nth-child(2) { margin-top:0; }
+    .field label { display:block; margin-bottom:5px; font-size:11px; font-weight:650; color:#475467; }
+    input[type=time], input[type=number], input[type=date] {
+      width:100%;
+      padding:8px 9px;
+      border:1px solid #d0d5dd;
+      border-radius:8px;
+      background:#fff;
+      color:#101828;
+      font:inherit;
+      outline:none;
+    }
+    input[type=time]:focus, input[type=number]:focus, input[type=date]:focus {
+      border-color:#84adff;
+      box-shadow:0 0 0 3px rgba(21,112,239,.09);
+    }
+    .save {
+      width:100%;
+      border:0;
+      border-radius:9px;
+      padding:10px 12px;
+      margin-top:2px;
+      background:#1570ef;
+      color:#fff;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+    .save:hover { filter:brightness(.97); }
+    .save:active { transform:translateY(1px); }
+    .note { margin:9px 2px 0; color:#98a2b3; font-size:10px; line-height:1.4; text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">When I Work Shift Grabber</h1>
+    <div class="subtitle">Fast preferred-shift detection and claiming</div>
+  </div>
+
+  <div class="card">
+    <div class="state-row">
+      <div>
+        <div class="section-title" style="margin-bottom:3px">Status</div>
+        <div id="state" class="state">AUTO-GRAB OFF</div>
+      </div>
+      <div id="statusPill" class="status-pill">Inactive</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Last scan</span><span id="lastScan" class="stat-value">—</span></div>
+      <div class="stat"><span class="stat-label">Page refreshes</span><span id="refreshCount" class="stat-value">0</span></div>
+      <div class="stat"><span class="stat-label">Processing</span><span class="stat-value"><span id="processed">0</span> / <span id="totalShifts">0</span></span></div>
+    </div>
+
+    <div class="last-action">
+      <strong>Last action</strong>
+      <span id="lastAction">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Automation</div>
+
+    <div class="toggle-row">
+      <div class="toggle-copy">
+        <div class="toggle-title">Enable auto-grab</div>
+        <div class="toggle-help">Monitor and claim matching open shifts.</div>
+      </div>
+      <label class="switch"><input id="enabled" type="checkbox"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-copy">
+        <div class="toggle-title">Auto-confirm shift</div>
+        <div class="toggle-help">Automatically click TAKE OPENSHIFT in the confirmation dialog.</div>
+      </div>
+      <label class="switch"><input id="autoConfirm" type="checkbox"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-copy">
+        <div class="toggle-title">Auto-refresh</div>
+        <div class="toggle-help">Refresh when no preferred shift is currently available.</div>
+      </div>
+      <label class="switch"><input id="autoRefresh" type="checkbox" checked><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Preferred Schedule</div>
+    <div class="field-grid">
+      <div class="field"><label for="shiftStart">Start time</label><input id="shiftStart" type="time" value="11:00"></div>
+      <div class="field"><label for="shiftEnd">End time</label><input id="shiftEnd" type="time" value="14:00"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Break & Lunch Exclusions</div>
+    <div class="toggle-row" style="margin-bottom:10px">
+      <div class="toggle-copy">
+        <div class="toggle-title">Enable break & lunch exclusions</div>
+        <div class="toggle-help">When enabled, shifts overlapping Break 1, Lunch, or Break 2 will be skipped. When disabled, these times are ignored.</div>
+      </div>
+      <label class="switch"><input id="breakLunchEnabled" type="checkbox" checked><span class="slider"></span></label>
+    </div>
+    <div class="field-grid">
+      <div class="field"><label for="break1Start">Break 1 start</label><input id="break1Start" type="time" value="14:00"></div>
+      <div class="field"><label for="break1End">Break 1 end</label><input id="break1End" type="time" value="14:30"></div>
+      <div class="field"><label for="lunchStart">Lunch start</label><input id="lunchStart" type="time" value="17:00"></div>
+      <div class="field"><label for="lunchEnd">Lunch end</label><input id="lunchEnd" type="time" value="18:00"></div>
+      <div class="field"><label for="break2Start">Break 2 start</label><input id="break2Start" type="time" value="20:00"></div>
+      <div class="field"><label for="break2End">Break 2 end</label><input id="break2End" type="time" value="20:30"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Do Not Grab Dates</div>
+    <div class="toggle-help" style="margin-bottom:8px">OpenShifts on saved dates will be ignored.</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+      <div class="field" style="margin-top:0"><label for="excludeDate">Date</label><input id="excludeDate" type="date"></div>
+      <button id="addExcludeDate" class="save" style="width:auto;margin:0;padding:9px 14px">Add</button>
+    </div>
+    <div id="excludedDatesList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Refresh Settings</div>
+
+    <div class="field-grid">
+      <div class="field"><label for="refreshSeconds">Full refresh (seconds)</label><input id="refreshSeconds" type="number" min="2" max="60" value="2"></div>
+    </div>
+
+    <div class="toggle-row" style="margin-top:9px">
+      <div class="toggle-copy">
+        <div class="toggle-title">Fast-poll</div>
+        <div class="toggle-help">Check page HTML between full refreshes.</div>
+      </div>
+      <label class="switch"><input id="fastPollEnabled" type="checkbox"><span class="slider"></span></label>
+    </div>
+
+    <div class="field">
+      <label for="fastPollInterval">Fast-poll interval (seconds)</label>
+      <input id="fastPollInterval" type="number" min="0.5" step="0.5" value="1">
+    </div>
+  </div>
+
+  <button id="save" class="save">Save settings</button>
+  <button id="resetCounters" class="save" style="background:#475467">Reset page refresh & processing</button>
+  <div class="note">Settings remain saved after the schedule page refreshes.</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
