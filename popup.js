@@ -1,4 +1,4 @@
-const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:2,fastPollEnabled:true,fastPollInterval:1,excludedDates:[],status:{}};
+const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:2,fastPollEnabled:true,fastPollInterval:1,excludedDates:[],shiftTypeFilter:"all",status:{}};
 const $=id=>document.getElementById(id);
 const fmt=t=>t?new Date(t).toLocaleTimeString([],{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—";
 
@@ -59,6 +59,7 @@ function load(){
     $("refreshSeconds").value=s.refreshSeconds||5;
     $("fastPollEnabled").checked=s.fastPollEnabled!==false;
     $("fastPollInterval").value=s.fastPollInterval||1;
+    $("shiftTypeFilter").value=s.shiftTypeFilter||"all";
     excludedDates=Array.isArray(s.excludedDates)?s.excludedDates:[];
     renderExcludedDates();
     render(s.status);
@@ -85,7 +86,8 @@ $("save").onclick=()=>{
     refreshSeconds:seconds,
     fastPollEnabled:$("fastPollEnabled").checked,
     fastPollInterval:fpInterval,
-    excludedDates
+    excludedDates,
+    shiftTypeFilter:$("shiftTypeFilter").value
   },()=>{
     const button=$("save");
     button.textContent="Saved ✓";
@@ -123,6 +125,9 @@ chrome.storage.onChanged.addListener(c=>{
     renderExcludedDates();
   }
   if (c.status) render(c.status.newValue);
+  if (c.shiftTypeFilter && $("shiftTypeFilter")) {
+    $("shiftTypeFilter").value = c.shiftTypeFilter.newValue || "all";
+  }
 });
 
 setInterval(()=>chrome.storage.local.get({status:{}},r=>render(r.status)),1000);
