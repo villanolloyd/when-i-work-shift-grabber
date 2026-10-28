@@ -6,7 +6,7 @@ const RESULT_POLL_MS = 100;
 const RESULT_WAIT_MS = 2000;
 const NEXT_SHIFT_DELAY_MS = 250;
 
-const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:5,fastPollEnabled:true,fastPollInterval:1,excludedDates:[]};
+const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:5,fastPollEnabled:true,fastPollInterval:1,excludedDates:[],shiftTypeFilter:"all"};
 const E={state:"disabled",lastScan:null,scanCount:0,refreshCount:0,lastAction:null,refreshPaused:false,processedShifts:0,totalShifts:0,attempts:0};
 let settings={...D},status={...E},refreshTimer=null,scanTimer=null,mutationTimer=null,quickPollTimer=null;
 let refreshInProgress=false,scanRunning=false,grabFlowActive=false,lastActionAt=0,flowId=0,quickPollBackoff=0,quickPollErrors=0;
@@ -82,10 +82,28 @@ function isExcludedDate(card){
   return !!d&&dates.includes(d);
 }
 
+function cardShiftType(card){
+  const text = txtOf(card).toLowerCase();
+
+  if (/\bon\s*[- ]?demand\b/i.test(text)) return "ondemand";
+  if (/\bshrinkage\b/i.test(text) || /\bshift\s*drop\b/i.test(text) || /\bshiftdrop\b/i.test(text)) return "shrinkage";
+
+  return "other";
+}
+
+function matchesShiftType(card){
+  const filter = settings.shiftTypeFilter || "all";
+  if (filter === "all") return true;
+  if (filter === "shrinkage") return cardShiftType(card) === "shrinkage";
+  if (filter === "ondemand") return cardShiftType(card) === "ondemand";
+  return true;
+}
+
 function getCards(){
   return [...document.querySelectorAll("div.shift-card")]
     .filter(vis)
     .filter(card=>!isExcludedDate(card))
+    .filter(card=>matchesShiftType(card))
     .map(card=>({card,ranges:parseRangesFromText(txtOf(card))}))
     .filter(x=>x.ranges.length);
 }
@@ -354,7 +372,11 @@ async function quickCheck(){
     quickPollErrors=0;quickPollBackoff=0;
     const text=await resp.text();
     const doc=new DOMParser().parseFromString(text,'text/html');
-    const parsed=[...doc.querySelectorAll('div.shift-card')].filter(n=>!isExcludedDate(n)).map(n=>({ranges:parseRangesFromText(n.textContent||'')})).filter(x=>x.ranges.length);
+    const parsed=[...doc.querySelectorAll('div.shift-card')]
+      .filter(n => !isExcludedDate(n))
+      .filter(n => matchesShiftType(n))
+      .map(n => ({ranges:parseRangesFromText(n.textContent||'')}))
+      .filter(x => x.ranges.length);
     const matches=parsed.filter(p=>p.ranges.some(preferred));
     if(matches.length){save({lastAction:`Fast-poll detected ${matches.length} matching shift(s) — reloading page`});safeReload(10,1000);return}
   }catch{quickPollErrors++;quickPollBackoff=Math.min(30,(quickPollBackoff||1)*2)}
