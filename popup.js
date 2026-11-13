@@ -1,4 +1,4 @@
-const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:2,fastPollEnabled:true,fastPollInterval:1,excludedDates:[],shiftTypes:[],status:{}};
+const D={enabled:false,shiftStart:"11:00",shiftEnd:"22:00",breakLunchEnabled:true,break1Start:"14:00",break1End:"14:30",lunchStart:"17:00",lunchEnd:"18:00",break2Start:"20:00",break2End:"20:30",autoConfirm:false,autoRefresh:true,refreshSeconds:2,fastPollEnabled:true,fastPollInterval:1,excludedDates:[],shiftTypes:[],shiftTypeFilter:"all",status:{}};
 const $=id=>document.getElementById(id);
 const fmt=t=>t?new Date(t).toLocaleTimeString([],{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—";
 
@@ -18,6 +18,11 @@ let excludedDates=[];
 const validShiftTypes=["ondemand","shrinkage","review_agent","triage_agent"];
 function selectedShiftTypes(){
   return [...document.querySelectorAll(".shiftTypeOption:checked")].map(input=>input.value).filter(type=>validShiftTypes.includes(type));
+}
+function legacyShiftTypeFilter(types){
+  // The current content script's legacy filter supports these two categories.
+  // Map a sole selection so selecting Shrinkage cannot fall through to "all".
+  return types.length===1 && ["ondemand","shrinkage"].includes(types[0]) ? types[0] : "all";
 }
 function setSelectedShiftTypes(types){
   const selected=new Set(Array.isArray(types)?types:[]);
@@ -66,12 +71,14 @@ function load(){
 $("save").onclick=()=>{
   const seconds=Math.min(60,Math.max(2,Number($("refreshSeconds").value)||5));
   const fpInterval=Math.max(0.5,Number($("fastPollInterval").value)||1);
+  const shiftTypes=selectedShiftTypes();
   chrome.storage.local.set({
     enabled:$("enabled").checked,shiftStart:$("shiftStart").value,shiftEnd:$("shiftEnd").value,
     breakLunchEnabled:$("breakLunchEnabled").checked,break1Start:$("break1Start").value,break1End:$("break1End").value,
     lunchStart:$("lunchStart").value,lunchEnd:$("lunchEnd").value,break2Start:$("break2Start").value,break2End:$("break2End").value,
     autoConfirm:$("autoConfirm").checked,autoRefresh:$("autoRefresh").checked,refreshSeconds:seconds,
-    fastPollEnabled:$("fastPollEnabled").checked,fastPollInterval:fpInterval,excludedDates,shiftTypes:selectedShiftTypes()
+    fastPollEnabled:$("fastPollEnabled").checked,fastPollInterval:fpInterval,excludedDates,shiftTypes,
+    shiftTypeFilter:legacyShiftTypeFilter(shiftTypes)
   },()=>{const button=$("save");button.textContent="Saved ✓";setTimeout(()=>button.textContent="Save settings",1000);});
 };
 
