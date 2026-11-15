@@ -13,13 +13,14 @@
     const text = normalize(card?.innerText || card?.textContent);
     if (/\bon\s*[- ]?demand\b/.test(text)) return "ondemand";
     if (/\bshrinkage\b|\bshift\s*drop\b|\bshiftdrop\b/.test(text)) return "shrinkage";
-    if (/\breview[_\s-]*agent\b/.test(text)) return "review_agent";
-    if (/\btriage[_\s-]*agent\b/.test(text)) return "triage_agent";
+    // When I Work labels these categories in plural (Review_Agents / Triage_Agents).
+    if (/\breview[_\s-]*agents?\b/.test(text)) return "review_agent";
+    if (/\btriage[_\s-]*agents?\b/.test(text)) return "triage_agent";
     return "other";
   }
 
   function isAllowed(card) {
-    // Fail closed: with no category selected, do not expose any cards to the grabber.
+    // Fail closed until settings load and when no category is selected.
     return filterReady && selectedTypes.length > 0 && selectedTypes.includes(detectType(card));
   }
 
@@ -83,7 +84,6 @@
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  // Backstop: even if another script attempts to click a filtered card, prevent the site action.
   document.addEventListener("click", event => {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     const button = target?.closest(`${CARD_SELECTOR} button, ${CARD_SELECTOR} .btn`);
