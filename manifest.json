@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "When I Work – Shift Grabber",
-  "version": "11.3.5",
-  "description": "When I Work shift grabber with configurable break/lunch exclusions, preferred-shift auto-claiming, auto-refresh, and fast-poll monitoring.",
+  "version": "11.3.6",
+  "description": "When I Work shift grabber with configurable shift category filters, break/lunch exclusions, preferred-shift auto-claiming, auto-refresh, and fast-poll monitoring.",
   "permissions": [
     "storage"
   ],
@@ -19,6 +19,7 @@
         "https://appx.wheniwork.com/myschedule*"
       ],
       "js": [
+        "shift-type-filter.js",
         "content.js"
       ],
       "run_at": "document_idle"
